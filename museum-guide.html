@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Музейный Гид — ИИ Генератор</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #F5F0E8;
+    --bg-card: #FDFAF4;
+    --text-main: #1A1208;
+    --text-muted: #6B5E45;
+    --text-light: #9C8E77;
+    --accent: #8B5E3C;
+    --accent-light: #D4A574;
+    --accent-pale: #F0E4D0;
+    --border: #DDD0B8;
+    --gold: #C9963A;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-main);
+    min-height: 100vh;
+  }
+
+  .grain {
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 3rem 2rem 2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-ornament {
+    font-family: serif;
+    color: var(--gold);
+    font-size: 1.2rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text-main);
+    margin-bottom: 0.75rem;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 300;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 3rem 2rem 4rem;
+  }
+
+  .upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent-light);
+    background: #FDF6EC;
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .upload-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 1.25rem;
+    background: var(--accent-pale);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .upload-icon svg {
+    width: 26px;
+    height: 26px;
+    stroke: var(--accent);
+  }
+
+  .upload-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    color: var(--text-main);
+  }
+
+  .upload-hint {
+    font-size: 0.85rem;
+    color: var(--text-light);
+  }
+
+  .config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  input[type="text"], input[type="password"], select, textarea {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent-light);
+  }
+
+  .api-row {
+    margin-top: 1rem;
+  }
+
+  .generate-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    margin-top: 1.75rem;
+    padding: 1rem;
+    background: var(--accent);
+    color: #FDF6EC;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .generate-btn:hover { background: #7A4F2E; transform: translateY(-1px); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { background: var(--border); color: var(--text-light); cursor: not-allowed; transform: none; }
+
+  .generate-btn .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: none;
+  }
+
+  .generate-btn.loading .spinner { display: block; }
+  .generate-btn.loading .btn-text { opacity: 0.7; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .file-info {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--accent-pale);
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: 0.88rem;
+  }
+
+  .file-info.visible { display: flex; }
+
+  .file-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--accent);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .remove-file {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 1.1rem;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+
+  .remove-file:hover { color: var(--text-main); }
+
+  .results-section {
+    margin-top: 3rem;
+    display: none;
+  }
+
+  .results-section.visible { display: block; }
+
+  .results-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+
+  .results-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  .results-count {
+    font-size: 0.85rem;
+    color: var(--text-light);
+  }
+
+  .controls-bar {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .ctrl-btn {
+    padding: 0.45rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .ctrl-btn:hover { border-color: var(--accent-light); color: var(--accent); }
+
+  .exhibits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .exhibit-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .exhibit-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .exhibit-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 36px;
+  }
+
+  .exhibit-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .copy-btn:hover { border-color: var(--accent-light); color: var(--accent); }
+  .copy-btn.copied { color: #4a7c59; border-color: #4a7c59; }
+
+  .exhibit-body {
+    padding: 1.5rem;
+  }
+
+  .guide-text {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--text-main);
+    font-weight: 300;
+  }
+
+  .error-box {
+    background: #FDF0EF;
+    border: 1px solid #F0B5B0;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    color: #8B3A35;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .error-box.visible { display: block; }
+
+  .divider {
+    width: 60px;
+    height: 1px;
+    background: var(--border);
+    margin: 2.5rem auto;
+  }
+
+  .print-area { display: none; }
+
+  @media print {
+    .print-area { display: block; }
+    .no-print { display: none; }
+  }
+
+  @media (max-width: 600px) {
+    .config-row { grid-template-columns: 1fr; }
+    header { padding: 2rem 1.25rem 1.5rem; }
+    main { padding: 2rem 1.25rem 3rem; }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="no-print">
+  <div class="header-ornament">✦ AI Museum Guide ✦</div>
+  <h1>Музейный Гид</h1>
+  <p class="subtitle">Загрузите файл с описанием экспонатов — ИИ создаст живые тексты для экскурсовода на каждый из них</p>
+</header>
+
+<main class="no-print">
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept=".txt,.pdf,.docx,.csv,.json,.md" />
+    <div class="upload-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14,2 14,8 20,8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10,9 9,9 8,9"/>
+      </svg>
+    </div>
+    <p class="upload-title">Перетащите файл или нажмите</p>
+    <p class="upload-hint">TXT, PDF, DOCX, CSV, JSON, MD — любой текстовый формат</p>
+  </div>
+
+  <div class="file-info" id="fileInfo">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/>
+    </svg>
+    <span class="file-name" id="fileName">файл.txt</span>
+    <button class="remove-file" id="removeFile" title="Удалить файл">✕</button>
+  </div>
+
+  <div class="config-row" style="margin-top:0; grid-template-columns: repeat(3, 1fr);">
+    <div class="field">
+      <label>Модель Gemma 4</label>
+      <select id="modelSelect">
+        <option value="gemma-4-27b-it">Gemma 4 27B (рекомендуется)</option>
+        <option value="gemma-4-26b-a4b-it">Gemma 4 26B A4B (MoE)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Стиль текста гида</label>
+      <select id="guideStyle">
+        <option value="engaging">Увлекательный и живой</option>
+        <option value="academic">Академический, подробный</option>
+        <option value="storytelling">Рассказ-история</option>
+        <option value="kids">Для детей и семей</option>
+        <option value="short">Краткий (2–3 предложения)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Язык текстов</label>
+      <select id="outputLang">
+        <option value="russian">Русский</option>
+        <option value="kazakh">Қазақша</option>
+        <option value="english">English</option>
+      </select>
+    </div>
+  </div>
+
+
+
+  <div class="error-box" id="errorBox"></div>
+
+  <button class="generate-btn" id="generateBtn" disabled>
+    <div class="spinner"></div>
+    <span class="btn-text">✦ Создать тексты гида</span>
+  </button>
+</main>
+
+<div class="divider no-print"></div>
+
+<section class="results-section" id="resultsSection">
+  <div style="max-width: 860px; margin: 0 auto; padding: 0 2rem 4rem;">
+    <div class="results-header">
+      <h2 class="results-title">Тексты экскурсовода</h2>
+      <span class="results-count" id="resultsCount"></span>
+    </div>
+    <div class="controls-bar">
+      <button class="ctrl-btn" onclick="copyAll()">Скопировать всё</button>
+      <button class="ctrl-btn" onclick="window.print()">Распечатать</button>
+    </div>
+    <div class="exhibits-list" id="exhibitsList"></div>
+  </div>
+</section>
+
+<script src="config.js"></script>
+<script>
+const GEMINI_API_KEY = window.GEMINI_API_KEY;
+const getGeminiURL = (model) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+let fileContent = '';
+let fileLoaded = false;
+let uploadedFile = null;
+
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const removeFile = document.getElementById('removeFile');
+const generateBtn = document.getElementById('generateBtn');
+// API key loaded from config
+const errorBox = document.getElementById('errorBox');
+const resultsSection = document.getElementById('resultsSection');
+const exhibitsList = document.getElementById('exhibitsList');
+const resultsCount = document.getElementById('resultsCount');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+function handleFile(file) {
+  fileName.textContent = file.name;
+  fileInfo.classList.add('visible');
+  uploadedFile = file;
+  fileLoaded = true;
+  checkReady();
+}
+
+removeFile.addEventListener('click', () => {
+  fileContent = '';
+  fileLoaded = false;
+  uploadedFile = null;
+  fileInput.value = '';
+  fileInfo.classList.remove('visible');
+  checkReady();
+});
+
+
+
+function checkReady() {
+  generateBtn.disabled = !fileLoaded;
+}
+
+function showError(msg) {
+  errorBox.textContent = msg;
+  errorBox.classList.add('visible');
+}
+
+function hideError() {
+  errorBox.classList.remove('visible');
+}
+
+generateBtn.addEventListener('click', async () => {
+  hideError();
+  const apiKey = GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'ВСТАВЬ_СВОЙ_КЛЮЧ_СЮДА') {
+    showError('Откройте museum-guide.html в редакторе и замените ВСТАВЬ_СВОЙ_КЛЮЧ_СЮДА на ваш Gemini API ключ (строка с GEMINI_API_KEY)');
+    generateBtn.disabled = false;
+    return;
+  }
+  const style = document.getElementById('guideStyle').value;
+  const lang = document.getElementById('outputLang').value;
+
+  const styleDescriptions = {
+    engaging: 'увлекательный, живой, с интересными фактами и риторическими вопросами',
+    academic: 'академический, исторически точный, с датами и деталями',
+    storytelling: 'в формате истории — как будто рассказывает очевидец или сам экспонат',
+    kids: 'простой и весёлый, понятный детям 7–12 лет, с аналогиями из жизни',
+    short: 'краткий, 2–3 предложения, самое важное'
+  };
+
+  const langNames = { russian: 'русском', kazakh: 'казахском', english: 'английском' };
+
+  generateBtn.classList.add('loading');
+  generateBtn.disabled = true;
+  generateBtn.querySelector('.btn-text').textContent = 'Читаю файл…';
+
+  try {
+    // Extract text from file
+    let docText = '';
+    const isPDF = uploadedFile && uploadedFile.name.toLowerCase().endsWith('.pdf');
+    if (isPDF) {
+      generateBtn.querySelector('.btn-text').textContent = 'Читаю PDF…';
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const arrayBuffer = await uploadedFile.arrayBuffer();
+      const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const maxPages = Math.min(pdfDoc.numPages, 40);
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const tc = await page.getTextContent();
+        docText += tc.items.map(it => it.str).join(' ') + '\n';
+      }
+    } else {
+      docText = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = rej;
+        r.readAsText(uploadedFile, 'UTF-8');
+      });
+    }
+
+    if (!docText.trim()) throw new Error('Не удалось извлечь текст из файла. Попробуйте сохранить как TXT.');
+
+    generateBtn.querySelector('.btn-text').textContent = 'Генерирую тексты…';
+
+    const promptText = `You are a professional museum tour guide. Read the document and write spoken guide texts for each exhibit.
+
+For each exhibit use this exact format:
+===EXHIBIT===
+Name: [exhibit name]
+---
+[3-4 paragraphs of real spoken guide text in ${langNames[lang]} language, style: ${styleDescriptions[style]}]
+
+Repeat ===EXHIBIT=== for each exhibit found. Write real content only.
+
+Document:
+${docText.slice(0, 16000)}`;
+
+    const model = document.getElementById('modelSelect').value;
+
+    let statusTimer = setInterval(() => {
+      const msgs = ['Генерирую тексты…', 'Обрабатываю экспонаты…', 'Почти готово…'];
+      const btn = generateBtn.querySelector('.btn-text');
+      btn.textContent = msgs[Math.floor(Date.now()/4000) % msgs.length];
+    }, 4000);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+    const res = await fetch(`${getGeminiURL(model)}?key=${apiKey}`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: promptText }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 4096, stopSequences: [] }
+      })
+    });
+    clearTimeout(timeoutId);
+    clearInterval(statusTimer);
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      const msg = errBody?.error?.message || errBody?.error?.status || JSON.stringify(errBody);
+      throw new Error(`HTTP ${res.status}: ${msg}`);
+    }
+
+    const data = await res.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!rawText.trim()) throw new Error('Модель вернула пустой ответ. Попробуйте ещё раз.');
+
+    // Parse plain text format: ===EXHIBIT=== blocks
+    const blocks = rawText.split('===EXHIBIT===').map(b => b.trim()).filter(b => b.length > 10);
+    if (blocks.length === 0) throw new Error('RAW от модели: ' + rawText.slice(0, 600));
+
+    const exhibits = blocks.map(block => {
+      const lines = block.split('\n');
+      let name = '';
+      let textLines = [];
+      let pastDivider = false;
+      for (const line of lines) {
+        if (line.startsWith('Name:')) {
+          name = line.replace('Name:', '').trim();
+        } else if (line.trim() === '---') {
+          pastDivider = true;
+        } else if (pastDivider && line.trim()) {
+          textLines.push(line.trim());
+        }
+      }
+      if (!name) name = lines[0].replace('Name:', '').trim() || 'Экспонат';
+      return { name, guideText: textLines.join('\n\n') };
+    }).filter(e => e.guideText.length > 0);
+
+    const parsed = { exhibits };
+
+    if (parsed.error) throw new Error(parsed.error);
+    if (!parsed.exhibits || parsed.exhibits.length === 0) {
+      throw new Error('В файле не найдено информации об экспонатах. Убедитесь, что файл содержит описания музейных предметов.');
+    }
+
+    renderResults(parsed.exhibits);
+
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      showError('Превышено время ожидания (90 сек). Попробуйте модель Gemma 4 27B или уменьшите файл.');
+    } else {
+      showError('Ошибка: ' + e.message);
+    }
+  } finally {
+    if (typeof statusTimer !== 'undefined') clearInterval(statusTimer);
+    generateBtn.classList.remove('loading');
+    generateBtn.disabled = false;
+    generateBtn.querySelector('.btn-text').textContent = '✦ Создать тексты гида';
+    checkReady();
+  }
+});
+
+function renderResults(exhibits) {
+  exhibitsList.innerHTML = '';
+  resultsCount.textContent = `${exhibits.length} экспонат${exhibits.length === 1 ? '' : exhibits.length < 5 ? 'а' : 'ов'}`;
+  resultsSection.classList.add('visible');
+
+  exhibits.forEach((ex, i) => {
+    const card = document.createElement('div');
+    card.className = 'exhibit-card';
+    card.style.animationDelay = `${i * 0.07}s`;
+
+    const paragraphs = ex.guideText.split(/\n+/).filter(p => p.trim()).map(p =>
+      `<p class="guide-text" style="margin-bottom: 0.75rem;">${p.trim()}</p>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="exhibit-header">
+        <span class="exhibit-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="exhibit-name">${ex.name}</span>
+        <button class="copy-btn" onclick="copyExhibit(this, '${encodeURIComponent(ex.guideText)}')">Копировать</button>
+      </div>
+      <div class="exhibit-body">${paragraphs}</div>
+    `;
+    exhibitsList.appendChild(card);
+  });
+
+  resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyExhibit(btn, encoded) {
+  navigator.clipboard.writeText(decodeURIComponent(encoded)).then(() => {
+    btn.textContent = '✓ Скопировано';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Копировать'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function copyAll() {
+  const cards = document.querySelectorAll('.exhibit-card');
+  const texts = Array.from(cards).map(card => {
+    const name = card.querySelector('.exhibit-name').textContent;
+    const body = Array.from(card.querySelectorAll('.guide-text')).map(p => p.textContent).join('\n\n');
+    return `${name}\n\n${body}`;
+  }).join('\n\n' + '─'.repeat(40) + '\n\n');
+  navigator.clipboard.writeText(texts).then(() => {
+    const btn = document.querySelector('.ctrl-btn');
+    btn.textContent = '✓ Всё скопировано';
+    setTimeout(() => btn.textContent = 'Скопировать всё', 2000);
+  });
+}
+</script>
+</body>
+</html>
