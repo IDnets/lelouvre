@@ -395,18 +395,75 @@
     header { padding: 2rem 1.25rem 1.5rem; }
     main { padding: 2rem 1.25rem 3rem; }
   }
+
+  /* ── Bottom nav ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    gap: 0;
+  }
+  .nav-tab {
+    flex: 1;
+    max-width: 200px;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: color 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .nav-tab svg { width: 20px; height: 20px; stroke: currentColor; }
+  .nav-tab.active { color: var(--accent); border-top: 2px solid var(--accent); margin-top: -1px; }
+  .tab-page { display: none; }
+  .tab-page.active { display: block; }
+  body { padding-bottom: 70px; }
+
+  /* ── Video tab ── */
+  .video-upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  .video-upload-zone:hover { border-color: var(--accent-light); background: #FDF6EC; }
+  .video-upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .fps-row { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+  .fps-row label { font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); white-space: nowrap; }
+  .fps-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .fps-val { font-size: 0.9rem; font-weight: 500; color: var(--accent); min-width: 60px; }
+  .progress-bar-wrap { background: var(--border); border-radius: 99px; height: 6px; margin-top: 1rem; overflow: hidden; display: none; }
+  .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; width: 0%; transition: width 0.1s; }
+  .frame-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1rem; max-height: 200px; overflow-y: auto; }
+  .frame-preview img { width: 80px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 <div class="grain" aria-hidden="true"></div>
 
-<header class="no-print">
-  <div class="header-ornament">✦ AI Museum Guide ✦</div>
-  <h1>Музейный Гид</h1>
-  <p class="subtitle">Загрузите файл с описанием экспонатов — ИИ создаст живые тексты для экскурсовода на каждый из них</p>
-</header>
 
+
+<div id="tab-guide" class="tab-page active">
 <main class="no-print">
   <div class="upload-zone" id="uploadZone">
     <input type="file" id="fileInput" accept=".txt,.pdf,.docx,.csv,.json,.md" />
@@ -431,14 +488,7 @@
     <button class="remove-file" id="removeFile" title="Удалить файл">✕</button>
   </div>
 
-  <div class="config-row" style="margin-top:0; grid-template-columns: repeat(3, 1fr);">
-    <div class="field">
-      <label>Модель Gemma 4</label>
-      <select id="modelSelect">
-        <option value="gemma-4-27b-it">Gemma 4 27B (рекомендуется)</option>
-        <option value="gemma-4-26b-a4b-it">Gemma 4 26B A4B (MoE)</option>
-      </select>
-    </div>
+<div class="config-row" style="margin-top:1rem;">
     <div class="field">
       <label>Стиль текста гида</label>
       <select id="guideStyle">
@@ -484,11 +534,79 @@
     <div class="exhibits-list" id="exhibitsList"></div>
   </div>
 </section>
+</div><!-- /tab-guide -->
 
-<script src="config.js"></script>
+<div id="tab-video" class="tab-page">
+<main style="max-width:860px;margin:0 auto;padding:2rem 2rem 4rem;position:relative;z-index:1;">
+  <div class="video-upload-zone" id="videoZone">
+    <input type="file" id="videoInput" accept="video/*" />
+    <div class="upload-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px;stroke:var(--accent)">
+        <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+      </svg>
+    </div>
+    <p class="upload-title" style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:500;margin-bottom:.4rem;">Перетащите видео или нажмите</p>
+    <p style="font-size:.85rem;color:var(--text-light)">MP4, AVI, MOV, MKV, WebM</p>
+  </div>
+
+  <div id="videoFileInfo" class="file-info" style="display:none;margin-top:1rem;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="5" width="15" height="14" rx="2"/><polygon points="23 7 16 12 23 17 23 7"/></svg>
+    <span id="videoFileName" style="flex:1;font-weight:500;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+    <button onclick="clearVideo()" style="background:none;border:none;cursor:pointer;color:var(--text-light);font-size:1.1rem;">✕</button>
+  </div>
+
+  <div class="config-row" style="margin-top:1.5rem;">
+    <div class="field">
+      <label>Название класса (объекта)</label>
+      <input type="text" id="className" placeholder="exhibit, painting, artifact..." value="exhibit" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;font-family:inherit;font-size:.9rem;color:var(--text-main);outline:none;width:100%;" />
+    </div>
+    <div class="field">
+      <label>Авторазметка через ИИ</label>
+      <select id="annotateMode" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;font-family:inherit;font-size:.9rem;color:var(--text-main);outline:none;width:100%;">
+        <option value="auto">Да — Gemini найдёт объект</option>
+        <option value="none">Нет — только кадры без разметки</option>
+      </select>
+    </div>
+  </div>
+  <div class="fps-row" style="margin-top:1rem;">
+    <label>Кадров в секунду (FPS):</label>
+    <input type="range" id="fpsRange" min="1" max="30" value="1" oninput="document.getElementById('fpsVal').textContent=this.value+' fps'" />
+    <span class="fps-val" id="fpsVal">1 fps</span>
+  </div>
+  <div style="margin-top:.5rem;font-size:.8rem;color:var(--text-light);">1–5 fps обычно хватает для YOLO датасета. ZIP будет разделён 70% train / 20% valid / 10% test.</div>
+
+  <div class="progress-bar-wrap" id="progressWrap">
+    <div class="progress-bar-fill" id="progressFill"></div>
+  </div>
+  <div id="progressLabel" style="font-size:.82rem;color:var(--text-muted);margin-top:.4rem;"></div>
+
+  <div class="frame-preview" id="framePreview"></div>
+
+  <div class="error-box" id="videoErrorBox"></div>
+
+  <button class="generate-btn" id="extractBtn" disabled onclick="extractFrames()" style="margin-top:1.75rem;">
+    <div class="spinner"></div>
+    <span class="btn-text">⬇ Извлечь кадры и скачать ZIP</span>
+  </button>
+</main>
+</div><!-- /tab-video -->
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" id="navGuide" onclick="switchTab('guide')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+    Гид
+  </button>
+  <button class="nav-tab" id="navVideo" onclick="switchTab('video')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+    YOLO Датасет
+  </button>
+</nav>
+
 <script>
-const GEMINI_API_KEY = window.GEMINI_API_KEY;
-const getGeminiURL = (model) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+const GEMINI_API_KEY = 'AQ.Ab8RN6IHCj7fa-tbhrrIVMa4a12qqR-61gDA57YQPOOO-dEVzw';
+const GEMINI_MODEL = 'gemini-3.1-flash-lite';
+const getGeminiURL = () => `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 let fileContent = '';
 let fileLoaded = false;
@@ -551,11 +669,6 @@ function hideError() {
 generateBtn.addEventListener('click', async () => {
   hideError();
   const apiKey = GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'ВСТАВЬ_СВОЙ_КЛЮЧ_СЮДА') {
-    showError('Откройте museum-guide.html в редакторе и замените ВСТАВЬ_СВОЙ_КЛЮЧ_СЮДА на ваш Gemini API ключ (строка с GEMINI_API_KEY)');
-    generateBtn.disabled = false;
-    return;
-  }
   const style = document.getElementById('guideStyle').value;
   const lang = document.getElementById('outputLang').value;
 
@@ -614,7 +727,6 @@ Repeat ===EXHIBIT=== for each exhibit found. Write real content only.
 Document:
 ${docText.slice(0, 16000)}`;
 
-    const model = document.getElementById('modelSelect').value;
 
     let statusTimer = setInterval(() => {
       const msgs = ['Генерирую тексты…', 'Обрабатываю экспонаты…', 'Почти готово…'];
@@ -625,9 +737,8 @@ ${docText.slice(0, 16000)}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 90000);
 
-    const res = await fetch(`${getGeminiURL(model)}?key=${apiKey}`, {
+    const res = await fetch(`${getGeminiURL()}?key=${apiKey}`, {
       method: 'POST',
-      signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: promptText }] }],
@@ -742,6 +853,246 @@ function copyAll() {
     setTimeout(() => btn.textContent = 'Скопировать всё', 2000);
   });
 }
+
+// ── Tab switching ──
+function switchTab(tab) {
+  document.getElementById('tab-guide').classList.toggle('active', tab === 'guide');
+  document.getElementById('tab-video').classList.toggle('active', tab === 'video');
+  document.getElementById('navGuide').classList.toggle('active', tab === 'guide');
+  document.getElementById('navVideo').classList.toggle('active', tab === 'video');
+}
+
+// ── Video tab ──
+let videoFile = null;
+
+document.getElementById('videoInput').addEventListener('change', function() {
+  if (this.files[0]) setVideo(this.files[0]);
+});
+
+const videoZone = document.getElementById('videoZone');
+videoZone.addEventListener('dragover', e => { e.preventDefault(); videoZone.style.borderColor = 'var(--accent-light)'; });
+videoZone.addEventListener('dragleave', () => { videoZone.style.borderColor = ''; });
+videoZone.addEventListener('drop', e => {
+  e.preventDefault(); videoZone.style.borderColor = '';
+  if (e.dataTransfer.files[0]) setVideo(e.dataTransfer.files[0]);
+});
+
+function setVideo(file) {
+  videoFile = file;
+  document.getElementById('videoFileName').textContent = file.name;
+  document.getElementById('videoFileInfo').style.display = 'flex';
+  document.getElementById('extractBtn').disabled = false;
+  document.getElementById('framePreview').innerHTML = '';
+}
+
+function clearVideo() {
+  videoFile = null;
+  document.getElementById('videoInput').value = '';
+  document.getElementById('videoFileInfo').style.display = 'none';
+  document.getElementById('extractBtn').disabled = true;
+  document.getElementById('framePreview').innerHTML = '';
+}
+
+// Ask Gemini to find bounding box of museum exhibit in image
+async function getAnnotation(blob, className) {
+  const b64 = await new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.readAsDataURL(blob);
+  });
+
+  const prompt = `You are a computer vision assistant. Find the main museum exhibit or object labeled "${className}" in this image.
+Return ONLY valid JSON, nothing else:
+{"found": true, "cx": 0.5, "cy": 0.45, "w": 0.6, "h": 0.7}
+Where cx,cy is center and w,h is size, all normalized 0.0-1.0.
+If no relevant object: {"found": false}`;
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${GEMINI_API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [
+        { inline_data: { mime_type: 'image/jpeg', data: b64 } },
+        { text: prompt }
+      ]}],
+      generationConfig: { temperature: 0, maxOutputTokens: 100 }
+    })
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  try {
+    // Strip markdown fences if present
+    const cleaned = text.replace(/```json|```/g, '').trim();
+    const m = cleaned.match(/\{[\s\S]*?\}/);
+    if (m) {
+      const j = JSON.parse(m[0]);
+      if (j.found === true && typeof j.cx === 'number') {
+        // Clamp values to 0-1
+        j.cx = Math.min(1, Math.max(0, j.cx));
+        j.cy = Math.min(1, Math.max(0, j.cy));
+        j.w  = Math.min(1, Math.max(0.01, j.w));
+        j.h  = Math.min(1, Math.max(0.01, j.h));
+        return j;
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function extractFrames() {
+  if (!videoFile) return;
+  const fps = parseInt(document.getElementById('fpsRange').value);
+  const annotate = document.getElementById('annotateMode').value === 'auto';
+  const className = (document.getElementById('className').value.trim() || 'exhibit').toLowerCase().replace(/\s+/g,'_');
+  const btn = document.getElementById('extractBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const preview = document.getElementById('framePreview');
+  const errBox = document.getElementById('videoErrorBox');
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.querySelector('.btn-text').textContent = 'Загружаю видео…';
+  progressWrap.style.display = 'block';
+  progressFill.style.width = '0%';
+  preview.innerHTML = '';
+  errBox.classList.remove('visible');
+
+  try {
+    if (!window.JSZip) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+    }
+
+    const url = URL.createObjectURL(videoFile);
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.muted = true;
+    video.src = url;
+
+    await new Promise((res, rej) => {
+      video.onloadeddata = res;
+      video.onerror = () => rej(new Error('Не удалось загрузить видео'));
+      setTimeout(() => rej(new Error('Таймаут загрузки видео')), 15000);
+    });
+
+    const duration = video.duration;
+    const interval = 1 / fps;
+    const totalFrames = Math.max(1, Math.floor(duration / interval));
+    progressLabel.textContent = `Видео: ${duration.toFixed(1)}с, ~${totalFrames} кадров`;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+
+    // Collect all frames first
+    const frames = []; // {blob, name}
+    let frameIdx = 0;
+    let currentTime = 0;
+
+    while (currentTime <= duration) {
+      await new Promise((res) => {
+        let done = false;
+        const tid = setTimeout(() => { if (!done) { done = true; res(); } }, 3000);
+        video.onseeked = () => { if (!done) { done = true; clearTimeout(tid); res(); } };
+        video.currentTime = currentTime;
+      });
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.88));
+      if (blob) {
+        const name = `frame_${String(frameIdx).padStart(5,'0')}`;
+        frames.push({ blob, name });
+        if (frameIdx < 12) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(blob);
+          preview.appendChild(img);
+        }
+      }
+      frameIdx++;
+      currentTime += interval;
+      progressFill.style.width = Math.min(40, Math.round((currentTime/duration)*40)) + '%';
+      progressLabel.textContent = `Извлекаю кадр ${frameIdx} / ~${totalFrames}`;
+      await new Promise(r => setTimeout(r, 0));
+    }
+
+    // Shuffle and split 70/20/10
+    const shuffled = frames.sort(() => Math.random() - 0.5);
+    const n = shuffled.length;
+    const trainEnd = Math.floor(n * 0.7);
+    const validEnd = trainEnd + Math.floor(n * 0.2);
+    const splits = {
+      train: shuffled.slice(0, trainEnd),
+      valid: shuffled.slice(trainEnd, validEnd),
+      test:  shuffled.slice(validEnd)
+    };
+
+    // Build ZIP with YOLO structure
+    const zip = new JSZip();
+    // data.yaml
+    zip.file('data.yaml', `train: train/images
+val: valid/images
+test: test/images
+nc: 1
+names: ['${className}']
+`);
+
+    for (const [split, items] of Object.entries(splits)) {
+      zip.folder(`${split}/images`);
+      zip.folder(`${split}/labels`);
+      for (let i = 0; i < items.length; i++) {
+        const { blob, name } = items[i];
+        zip.file(`${split}/images/${name}.jpg`, blob);
+
+        if (annotate) {
+          const pct = 40 + Math.round(((Object.values(splits).flat().indexOf(items[i])) / n) * 55);
+          progressFill.style.width = pct + '%';
+          progressLabel.textContent = `Разметка [${split}] ${i+1}/${items.length}…`;
+          const ann = await getAnnotation(blob, className);
+          if (ann) {
+            const yolo = `0 ${ann.cx.toFixed(6)} ${ann.cy.toFixed(6)} ${ann.w.toFixed(6)} ${ann.h.toFixed(6)}`;
+            zip.file(`${split}/labels/${name}.txt`, yolo);
+          } else {
+            zip.file(`${split}/labels/${name}.txt`, ''); // empty = no object
+          }
+          await new Promise(r => setTimeout(r, 100)); // rate limit pause
+        } else {
+          zip.file(`${split}/labels/${name}.txt`, '');
+        }
+      }
+    }
+
+    progressLabel.textContent = 'Упаковываю ZIP…';
+    progressFill.style.width = '97%';
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    progressFill.style.width = '100%';
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(zipBlob);
+    a.download = `yolo_dataset_${className}_${fps}fps.zip`;
+    a.click();
+
+    progressLabel.textContent = `✓ Готово! ${frames.length} кадров: ${splits.train.length} train / ${splits.valid.length} valid / ${splits.test.length} test`;
+    URL.revokeObjectURL(url);
+
+  } catch(e) {
+    errBox.textContent = 'Ошибка: ' + e.message;
+    errBox.classList.add('visible');
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.querySelector('.btn-text').textContent = '⬇ Извлечь кадры и скачать ZIP';
+  }
+}
+
 </script>
 </body>
 </html>
